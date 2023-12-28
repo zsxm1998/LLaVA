@@ -9,9 +9,12 @@ dist
 *.log.*
 *.json
 *.jsonl
+*LOGDIR*
 
 # Data
 !**/alpaca-data-conversation.json
+*.csv
+*.xlsx
 
 # Editor
 .idea

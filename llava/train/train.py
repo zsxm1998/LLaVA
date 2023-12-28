@@ -560,7 +560,7 @@ def preprocess_plain(
     # add end signal and concatenate together
     conversations = []
     for source in sources:
-        assert len(source) == 2
+        #assert len(source) == 2 modified by zsxm for patho pretraining
         assert DEFAULT_IMAGE_TOKEN in source[0]['value']
         source[0]['value'] = DEFAULT_IMAGE_TOKEN
         conversation = source[0]['value'] + source[1]['value'] + conversation_lib.default_conversation.sep

@@ -357,6 +357,21 @@ conv_llava_v1_mmtag = Conversation(
     version="v1_mmtag",
 )
 
+# add by zsxm
+conv_vicuna_patho = Conversation(
+    system="You are a large language and vision assistant trained by the VIPA lab, based on the general domain LLaVA architecture. "
+    "You are able to understand the visual content that the user provides, and assist the user with a variety of medical and clinical tasks using natural language. "
+    "Here is a chat between a curious USER and you. "
+    "Follow the instructions carefully and explain your answers in detail.",
+    roles=("USER", "ASSISTANT"),
+    version="v1",
+    messages=(),
+    offset=0,
+    sep_style=SeparatorStyle.TWO,
+    sep=" ",
+    sep2="</s>",
+)
+
 default_conversation = conv_vicuna_v1
 conv_templates = {
     "default": conv_vicuna_v0,
@@ -374,6 +389,10 @@ conv_templates = {
     "llava_llama_2": conv_llava_llama_2,
 
     "mpt": conv_mpt,
+
+    # add by zsxm
+    "patho_pretrain": conv_llava_plain,
+    "patho_finetune": conv_vicuna_patho,
 }
 
 
