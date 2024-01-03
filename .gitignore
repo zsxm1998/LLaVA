@@ -36,3 +36,6 @@ ckpts*
 
 # Demo
 serve_images/
+
+*.pth
+*.safetensors

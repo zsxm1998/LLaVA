@@ -47,7 +47,7 @@ class LlavaMetaModel:
 
         self.config.mm_vision_tower = vision_tower
 
-        if self.get_vision_tower() is None:
+        if self.get_vision_tower() is None or not self.get_vision_tower().is_loaded:
             vision_tower = build_vision_tower(model_args)
 
             if fsdp is not None and len(fsdp) > 0:
@@ -63,11 +63,11 @@ class LlavaMetaModel:
 
         self.config.use_mm_proj = True
         self.config.mm_projector_type = getattr(model_args, 'mm_projector_type', 'linear')
-        self.config.mm_hidden_size = vision_tower.hidden_size
         self.config.mm_vision_select_layer = mm_vision_select_layer
         self.config.mm_vision_select_feature = mm_vision_select_feature
 
-        if getattr(self, 'mm_projector', None) is None:
+        if getattr(self, 'mm_projector', None) is None or self.config.mm_hidden_size != vision_tower.hidden_size:
+            self.config.mm_hidden_size = vision_tower.hidden_size
             self.mm_projector = build_vision_projector(self.config)
         else:
             # In case it is frozen by LoRA
