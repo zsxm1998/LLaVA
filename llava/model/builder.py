@@ -92,11 +92,26 @@ def load_pretrained_model(model_path, model_base, model_name, load_8bit=False, l
             else:
                 tokenizer = AutoTokenizer.from_pretrained(model_base, use_fast=False)
                 cfg_pretrained = AutoConfig.from_pretrained(model_path)
-                model = LlavaLlamaForCausalLM.from_pretrained(model_base, low_cpu_mem_usage=True, config=cfg_pretrained, **kwargs)
+                model = LlavaLlamaForCausalLM.from_pretrained(model_base, low_cpu_mem_usage=True, config=cfg_pretrained, ignore_mismatched_sizes=False, **kwargs)
 
             mm_projector_weights = torch.load(os.path.join(model_path, 'mm_projector.bin'), map_location='cpu')
             mm_projector_weights = {k: v.to(torch.float16) for k, v in mm_projector_weights.items()}
-            model.load_state_dict(mm_projector_weights, strict=False)
+            # add by ZSXM
+            # error_weight = mm_projector_weights.pop('model.mm_projector.0.weight')
+            # with torch.no_grad():
+            #     model.model.mm_projector[0].weight = torch.nn.Parameter(error_weight.to(
+            #         device=model.model.mm_projector[0].weight.device,
+            #         dtype=model.model.mm_projector[0].weight.dtype))
+            # # end add by ZSXM
+            # model.load_state_dict(mm_projector_weights, strict=False)
+            # add by ZSXM
+            def get_w(weights, keyword):
+                return {k.split(keyword + '.')[1]: v for k, v in weights.items() if keyword in k}
+            mm_projector_weights = get_w(mm_projector_weights, 'mm_projector')
+            for name, param in model.get_model().mm_projector.named_parameters():
+                if name in mm_projector_weights:
+                    param.data = mm_projector_weights[name].data.to(dtype=param.dtype, device=param.device)
+            # end add by ZSXM
         else:
             if 'mpt' in model_name.lower():
                 tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=True)

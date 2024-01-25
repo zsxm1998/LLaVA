@@ -33,6 +33,8 @@ def eval_model(args):
     model_name = get_model_name_from_path(model_path)
     tokenizer, model, image_processor, context_len = load_pretrained_model(model_path, args.model_base, model_name)
 
+    print(f'ZSXM DEBUG: vision_tower: {type(model.get_model().get_vision_tower())}')
+
     questions = [json.loads(q) for q in open(os.path.expanduser(args.question_file), "r")]
     questions = get_chunk(questions, args.num_chunks, args.chunk_idx)
     answers_file = os.path.expanduser(args.answers_file)
@@ -71,7 +73,7 @@ def eval_model(args):
                 top_p=args.top_p,
                 num_beams=args.num_beams,
                 # no_repeat_ngram_size=3,
-                max_new_tokens=1024,
+                max_new_tokens=4096,
                 use_cache=True)
 
         input_token_len = input_ids.shape[1]
@@ -96,12 +98,12 @@ def eval_model(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model-path", type=str, default="facebook/opt-350m")
-    parser.add_argument("--model-base", type=str, default=None)
-    parser.add_argument("--image-folder", type=str, default="")
-    parser.add_argument("--question-file", type=str, default="tables/question.jsonl")
-    parser.add_argument("--answers-file", type=str, default="answer.jsonl")
-    parser.add_argument("--conv-mode", type=str, default="llava_v1")
+    parser.add_argument("--model-path", type=str, default="checkpoints/zpatho_1finetune/llava-patho-a30_finetune_lora")
+    parser.add_argument("--model-base", type=str, default='checkpoints/llava-v1.5-7b')
+    parser.add_argument("--image-folder", type=str, default="/medical-data/zsxm/public_dataset/image-caption/Quilt-1M/images")
+    parser.add_argument("--question-file", type=str, default="playground/patho_data/eval/quilt1m_val.jsonl")
+    parser.add_argument("--answers-file", type=str, default="playground/patho_data/eval/quilt1m_val_answer_llava-patho-a30_finetune_lora.jsonl")
+    parser.add_argument("--conv-mode", type=str, default="patho_finetune")
     parser.add_argument("--num-chunks", type=int, default=1)
     parser.add_argument("--chunk-idx", type=int, default=0)
     parser.add_argument("--temperature", type=float, default=0.2)

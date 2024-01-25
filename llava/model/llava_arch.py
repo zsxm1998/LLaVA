@@ -75,11 +75,17 @@ class LlavaMetaModel:
                 p.requires_grad = True
 
         if pretrain_mm_mlp_adapter is not None:
+            self.config.pretrain_mm_mlp_adapter = pretrain_mm_mlp_adapter
             mm_projector_weights = torch.load(pretrain_mm_mlp_adapter, map_location='cpu')
             def get_w(weights, keyword):
                 return {k.split(keyword + '.')[1]: v for k, v in weights.items() if keyword in k}
-
-            self.mm_projector.load_state_dict(get_w(mm_projector_weights, 'mm_projector'))
+            mm_projector_weights = get_w(mm_projector_weights, 'mm_projector')
+            try:
+                self.mm_projector.load_state_dict(mm_projector_weights)
+            except RuntimeError:
+                for name, param in self.mm_projector.named_parameters():
+                    if name in mm_projector_weights:
+                        param.data = mm_projector_weights[name].data.to(dtype=param.dtype, device=param.device)
 
 
 class LlavaMetaForCausalLM(ABC):
@@ -111,14 +117,17 @@ class LlavaMetaForCausalLM(ABC):
                 position_ids = torch.sum(attention_mask, dim=1).unsqueeze(-1) - 1
             return input_ids, position_ids, attention_mask, past_key_values, None, labels
 
-        if type(images) is list or images.ndim == 5:
-            concat_images = torch.cat([image for image in images], dim=0)
-            image_features = self.encode_images(concat_images)
-            split_sizes = [image.shape[0] for image in images]
-            image_features = torch.split(image_features, split_sizes, dim=0)
-            image_features = [x.flatten(0, 1).to(self.device) for x in image_features]
-        else:
-            image_features = self.encode_images(images).to(self.device)
+        # if type(images) is list or images.ndim == 5: #假设N句话，每句M张图片, [N, M, 3, H, W]
+        #     concat_images = torch.cat([image for image in images], dim=0) #[N*M, 3, H, W]
+        #     image_features = self.encode_images(concat_images) #[N*M, L, D]
+        #     split_sizes = [image.shape[0] for image in images] #[M]*N
+        #     image_features = torch.split(image_features, split_sizes, dim=0) #[M, L, D]*N
+        #     image_features = [x.flatten(0, 1).to(self.device) for x in image_features] #[M*L, D] * N
+        # else:
+        #     image_features = self.encode_images(images).to(self.device)
+        if type(images) is list or images.ndim == 5: #假设N句话，每句M张图片, [N, M, 3, H, W]
+            images = torch.cat([image for image in images], dim=0) #[N*M, 3, H, W]
+        image_features = self.encode_images(images).to(self.device)
 
         # TODO: image start / end is not implemented here to support pretraining.
         if getattr(self.config, 'tune_mm_mlp_adapter', False) and getattr(self.config, 'mm_use_im_start_end', False):

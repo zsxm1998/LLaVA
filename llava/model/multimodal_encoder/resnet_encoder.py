@@ -28,7 +28,7 @@ class ResNetVisionTower(nn.Module):
 
     def feature_select(self, image_forward_outs):
         if self.select_feature == 'patch':
-            image_features = image_forward_outs.hidden_states[self.select_layer] + (image_forward_outs.pooler_output,)
+            image_features = image_forward_outs.hidden_states + (image_forward_outs.pooler_output,)
             return image_features[self.select_layer]
         elif self.select_feature == 'pool':
             return image_forward_outs.pooler_output

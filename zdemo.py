@@ -24,3 +24,5 @@ args = type('Args', (), {
 eval_model(args)
 
 #CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES=1 python -m llava.serve.model_worker --host 0.0.0.0 --controller http://localhost:10000 --port 40000 --worker http://localhost:40000 --model-path ./checkpoints/llava-v1.5-7b --load-8bit
+
+#CUDA_VISIBLE_DEVICES=0,1,2 python llava/eval/model_vqa_batch.py --model-path checkpoints/zpatho_0pretrain/llava_QuiltNet-B-16 --model-base checkpoints/vicuna-7b-v1.5 --image-folder /medical-data/zsxm/public_dataset/image-caption/Quilt-1M/images --question-file playground/patho_data/eval/quilt1m_val.jsonl --answers-file playground/patho_data/eval/quilt1m_val_answer_QuiltNet_patho_pretrain_batch.jsonl --conv-mode patho_pretrain --batch_size 32
