@@ -30,7 +30,9 @@ class LlavaMetaModel:
         super(LlavaMetaModel, self).__init__(config)
 
         if hasattr(config, "mm_vision_tower"):
-            self.vision_tower = build_vision_tower(config, delay_load=True)
+            print(f"ZSXM debug: In LlavaMetaModel.__init__: hasattr(config, 'tune_vision_tower'):{hasattr(config, 'tune_vision_tower')}")
+            print(f"ZSXM debug: In LlavaMetaModel.__init__: getattr(config, 'tune_vision_tower', False):{getattr(config, 'tune_vision_tower', False)}")
+            self.vision_tower = build_vision_tower(config, delay_load=not getattr(config, 'tune_vision_tower', False))
             self.mm_projector = build_vision_projector(config)
 
     def get_vision_tower(self):

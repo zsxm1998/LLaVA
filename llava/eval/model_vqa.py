@@ -98,17 +98,19 @@ def eval_model(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model-path", type=str, default="checkpoints/zpatho_1finetune/llava-patho-a30_finetune_lora")
-    parser.add_argument("--model-base", type=str, default='checkpoints/llava-v1.5-7b')
-    parser.add_argument("--image-folder", type=str, default="/medical-data/zsxm/public_dataset/image-caption/Quilt-1M/images")
-    parser.add_argument("--question-file", type=str, default="playground/patho_data/eval/quilt1m_val.jsonl")
-    parser.add_argument("--answers-file", type=str, default="playground/patho_data/eval/quilt1m_val_answer_llava-patho-a30_finetune_lora.jsonl")
+    parser.add_argument("--model-path", type=str, default="checkpoints/zcombine/patch-bbox-contour_llava-13b-tuneVisionTower-full")
+    parser.add_argument("--model-base", type=str, default=None)
+    parser.add_argument("--image-folder", type=str, default="/c22073/datasets/combination/edge08")
+    parser.add_argument("--question-file", type=str, default="playground/patho_data/liverWSI/patch_bbox_contour/question_edge08_336_14_val.jsonl")
+    parser.add_argument("--answers-file", type=str, default="zz.jsonl")
     parser.add_argument("--conv-mode", type=str, default="patho_finetune")
-    parser.add_argument("--num-chunks", type=int, default=1)
-    parser.add_argument("--chunk-idx", type=int, default=0)
+    parser.add_argument("--num-chunks", type=int, default=4)
+    parser.add_argument("--chunk-idx", type=int, default=3)
     parser.add_argument("--temperature", type=float, default=0.2)
     parser.add_argument("--top_p", type=float, default=None)
     parser.add_argument("--num_beams", type=int, default=1)
     args = parser.parse_args()
 
     eval_model(args)
+
+# CUDA_VISIBLE_DEVICES=7 python llava/eval/model_vqa.py --answers-file playground/patho_data/eval/quilt1m_val_answer_llava-13b-full_epoch2/7.jsonl --chunk-idx 7
