@@ -30,9 +30,9 @@ class LlavaMetaModel:
         super(LlavaMetaModel, self).__init__(config)
 
         if hasattr(config, "mm_vision_tower"):
-            print(f"ZSXM debug: In LlavaMetaModel.__init__: hasattr(config, 'tune_vision_tower'):{hasattr(config, 'tune_vision_tower')}")
-            print(f"ZSXM debug: In LlavaMetaModel.__init__: getattr(config, 'tune_vision_tower', False):{getattr(config, 'tune_vision_tower', False)}")
-            self.vision_tower = build_vision_tower(config, delay_load=not getattr(config, 'tune_vision_tower', False))
+            self.vision_tower = build_vision_tower(config, 
+                                                   delay_load=not getattr(config,'tune_vision_tower',False),
+                                                   load_parameter_first=not getattr(config,'tune_vision_tower',False))
             self.mm_projector = build_vision_projector(config)
 
     def get_vision_tower(self):
@@ -64,12 +64,13 @@ class LlavaMetaModel:
             vision_tower.load_model()
 
         self.config.use_mm_proj = True
-        self.config.mm_projector_type = getattr(model_args, 'mm_projector_type', 'linear')
         self.config.mm_vision_select_layer = mm_vision_select_layer
         self.config.mm_vision_select_feature = mm_vision_select_feature
-
-        if getattr(self, 'mm_projector', None) is None or self.config.mm_hidden_size != vision_tower.hidden_size:
+        if getattr(self, 'mm_projector', None) is None \
+            or self.config.mm_hidden_size != vision_tower.hidden_size \
+            or self.config.mm_projector_type != model_args.mm_projector_type:
             self.config.mm_hidden_size = vision_tower.hidden_size
+            self.config.mm_projector_type = model_args.mm_projector_type
             self.mm_projector = build_vision_projector(self.config)
         else:
             # In case it is frozen by LoRA
@@ -190,7 +191,6 @@ class LlavaMetaForCausalLM(ABC):
                     cur_image_idx += 1
                     cur_new_input_embeds.append(cur_image_features)
                     cur_new_labels.append(torch.full((cur_image_features.shape[0],), IGNORE_INDEX, device=cur_labels.device, dtype=cur_labels.dtype))
-
             cur_new_input_embeds = torch.cat(cur_new_input_embeds)
             cur_new_labels = torch.cat(cur_new_labels)
 

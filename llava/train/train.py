@@ -20,7 +20,7 @@ from dataclasses import dataclass, field
 import json
 import logging
 import pathlib
-from typing import Dict, Optional, Sequence, List
+from typing import Dict, Optional, Sequence, List, Union
 
 import torch
 
@@ -51,8 +51,9 @@ class ModelArguments:
     version: Optional[str] = field(default="v0")
     freeze_backbone: bool = field(default=False)
     tune_mm_mlp_adapter: bool = field(default=False)
+    tune_vision_tower: bool = field(default=False)
     vision_tower: Optional[str] = field(default=None)
-    mm_vision_select_layer: Optional[int] = field(default=-1)   # default to the last layer
+    mm_vision_select_layer: Optional[str] = field(default='-1')   # default to the last layer
     pretrain_mm_mlp_adapter: Optional[str] = field(default=None)
     mm_projector_type: Optional[str] = field(default='linear')
     mm_use_im_start_end: bool = field(default=False)
@@ -104,7 +105,6 @@ class TrainingArguments(transformers.TrainingArguments):
     lora_bias: str = "none"
     mm_projector_lr: Optional[float] = None
     group_by_modality_length: bool = field(default=False)
-    tune_vision_tower: bool = field(default=False)
 
 
 def maybe_zero_3(param, ignore_status=False, name=None):
@@ -904,8 +904,8 @@ def train():
                 p.requires_grad = False
 
         # Add by ZSXM
-        model.config.tune_vision_tower = training_args.tune_vision_tower
-        if training_args.tune_vision_tower:
+        model.config.tune_vision_tower = model_args.tune_vision_tower
+        if model_args.tune_vision_tower:
             vision_tower.requires_grad_(True)
         # Add by ZSXM
 

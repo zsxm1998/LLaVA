@@ -8,7 +8,7 @@ deepspeed llava/train/train_mem.py \
     --image_folder /c22073/datasets/combination \
     --vision_tower /c22073/LLM_weights/clip-vit-large-patch14-336 \
     --mm_projector_type mlp2x_gelu \
-    --mm_vision_select_layer -2 \
+    --mm_vision_select_layer="-2" \
     --tune_vision_tower True \
     --mm_use_im_start_end False \
     --mm_use_im_patch_token False \
@@ -23,7 +23,7 @@ deepspeed llava/train/train_mem.py \
     --evaluation_strategy "no" \
     --save_strategy "steps" \
     --save_steps 1000 \
-    --save_total_limit 3 \
+    --save_total_limit 1 \
     --learning_rate 2e-5 \
     --weight_decay 0. \
     --warmup_ratio 0.03 \
