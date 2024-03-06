@@ -47,12 +47,12 @@ class ClipForVisionTokenClassification(CLIPPreTrainedModel):
         if isinstance(module, CLIPVisionModel):
             module.gradient_checkpointing = value
 
-    def __init__(self, config, num_classes=2, select_layer=-2):
+    def __init__(self, config, num_classes=2, select_layer=-2, train_encoder=True):
         super().__init__(config)
         self.config.num_classes = num_classes
         self.config.select_layer = select_layer
         self.vision_tower = CLIPVisionModel(config)
-        self.vision_tower.requires_grad_(False)
+        self.vision_tower.requires_grad_(train_encoder)
         self.head = nn.Linear(config.hidden_size, num_classes)
         self.post_init()
 
@@ -175,11 +175,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--image_dir", type=str, default='/medical-data/zsxm/datasets/liverWSI/edge08/images')
     parser.add_argument("--label_dir", type=str, default='/medical-data/zsxm/datasets/liverWSI/edge08/labels')
-    parser.add_argument("--model", type=str, default="/medical-data/zsxm/codes/LLaVA/checkpoints/clip-vit-large-patch14-336")
-    parser.add_argument("--output", type=str, default="./checkpoints/ztestCLIP/clip-vit-large-patch14-336_edge08_epoch30")
+    parser.add_argument("--model", type=str, default="checkpoints/clip-vit-large-patch14-336")
+    parser.add_argument("--output", type=str, default="./checkpoints/ztestCLIP/trainall_clip-vit-large-patch14-336_edge08_epoch30")
     parser.add_argument("--epoch", type=int, default=30)
-    parser.add_argument("--batch_size", type=int, default=16)
+    parser.add_argument("--batch_size", type=int, default=8)
     args = parser.parse_args()
-
 
     train(args)
