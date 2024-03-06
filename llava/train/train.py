@@ -51,8 +51,9 @@ class ModelArguments:
     version: Optional[str] = field(default="v0")
     freeze_backbone: bool = field(default=False)
     tune_mm_mlp_adapter: bool = field(default=False)
+    tune_vision_tower: bool = field(default=False)
     vision_tower: Optional[str] = field(default=None)
-    mm_vision_select_layer: Optional[int] = field(default=-1)   # default to the last layer
+    mm_vision_select_layer: Optional[str] = field(default='-1')   # default to the last layer
     pretrain_mm_mlp_adapter: Optional[str] = field(default=None)
     mm_projector_type: Optional[str] = field(default='linear')
     mm_use_im_start_end: bool = field(default=False)
@@ -309,12 +310,12 @@ def preprocess_multimodal(
 
     for source in sources:
         for sentence in source:
-            if DEFAULT_IMAGE_TOKEN in sentence['value']:
-                sentence['value'] = sentence['value'].replace(DEFAULT_IMAGE_TOKEN, '').strip()
-                sentence['value'] = DEFAULT_IMAGE_TOKEN + '\n' + sentence['value']
-                sentence['value'] = sentence['value'].strip()
-                if "mmtag" in conversation_lib.default_conversation.version:
-                    sentence['value'] = sentence['value'].replace(DEFAULT_IMAGE_TOKEN, '<Image>' + DEFAULT_IMAGE_TOKEN + '</Image>')
+            # if DEFAULT_IMAGE_TOKEN in sentence['value']:
+            #     sentence['value'] = sentence['value'].replace(DEFAULT_IMAGE_TOKEN, '').strip()
+            #     sentence['value'] = DEFAULT_IMAGE_TOKEN + '\n' + sentence['value']
+            #     sentence['value'] = sentence['value'].strip()
+            #     if "mmtag" in conversation_lib.default_conversation.version:
+            #         sentence['value'] = sentence['value'].replace(DEFAULT_IMAGE_TOKEN, '<Image>' + DEFAULT_IMAGE_TOKEN + '</Image>')
             replace_token = DEFAULT_IMAGE_TOKEN
             if data_args.mm_use_im_start_end:
                 replace_token = DEFAULT_IM_START_TOKEN + replace_token + DEFAULT_IM_END_TOKEN
@@ -446,7 +447,7 @@ def preprocess_v1(
 
     # Mask targets
     sep = conv.sep + conv.roles[1] + ": "
-    for conversation, target in zip(conversations, targets):
+    for conversation, target, input_id in zip(conversations, targets, input_ids):
         total_len = int(target.ne(tokenizer.pad_token_id).sum())
 
         rounds = conversation.split(conv.sep2)
@@ -475,8 +476,12 @@ def preprocess_v1(
 
         if cur_len < tokenizer.model_max_length:
             if cur_len != total_len:
+                rank0_print(f'ZSXM DEBUG conversation: {conversation}')
+                rank0_print(f'ZSXM DEBUG rounds: {rounds}')
+                rank0_print(f'ZSXM DEBUG input_id: {input_id}')
+                rank0_print(f'ZSXM DEBUG round_id: {[tokenizer_image_token(rou, tokenizer) for rou in rounds]}')
                 target[:] = IGNORE_INDEX
-                print(
+                rank0_print(
                     f"WARNING: tokenization mismatch: {cur_len} vs. {total_len}."
                     f" (ignored)"
                 )
@@ -852,7 +857,7 @@ def train():
             cache_dir=training_args.cache_dir,
             model_max_length=training_args.model_max_length,
             padding_side="right",
-            use_fast=False,
+            use_fast=True,
         )
 
     if model_args.version == "v0":
@@ -897,6 +902,12 @@ def train():
         if training_args.freeze_mm_mlp_adapter:
             for p in model.get_model().mm_projector.parameters():
                 p.requires_grad = False
+
+        # Add by ZSXM
+        model.config.tune_vision_tower = model_args.tune_vision_tower
+        if model_args.tune_vision_tower:
+            vision_tower.requires_grad_(True)
+        # Add by ZSXM
 
         if training_args.bits in [4, 8]:
             model.get_model().mm_projector.to(dtype=compute_dtype, device=training_args.device)

@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import re
+from .qformer import QFormer
 
 
 class IdentityMap(nn.Module):
@@ -47,5 +48,10 @@ def build_vision_projector(config, delay_load=False, **kwargs):
 
     if projector_type == 'identity':
         return IdentityMap()
+    
+    if projector_type.lower().startswith('qformer'):
+        _, num_query, num_layer = projector_type.split('_')
+        num_query, num_layer = int(num_query), int(num_layer)
+        return QFormer(num_query, num_layer, config.mm_hidden_size, config.hidden_size)
 
     raise ValueError(f'Unknown projector type: {projector_type}')

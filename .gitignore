@@ -7,8 +7,8 @@ dist
 # Log
 *.log
 *.log.*
-*.json
-*.jsonl
+#*.json
+#*.jsonl
 *LOGDIR*
 
 # Data
@@ -39,3 +39,6 @@ serve_images/
 
 *.pth
 *.safetensors
+
+playground/
+.vscode/*
